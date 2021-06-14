@@ -393,6 +393,17 @@ def train_worker(gpu,cfg):
                             'warmup_scheduler': warmup_scheduler.state_dict() if cfg.training.lr_linear_decay else None,
                         }, os.path.join(cfg.ckpt_dir,'model.pth'))
 
+                    ckpt_name = 'model_' + str(epoch-1) + '.pth'
+                    torch.save({
+                        'model': model.state_dict(),
+                        'optimizer': optimizer.state_dict(),
+                        'epoch': epoch-1,
+                        'step': step,
+                        'lr': lr_scheduler.get_last_lr(),
+                        'model_selection_metric': model_selection_metric,
+                        'warmup_scheduler': warmup_scheduler.state_dict() if cfg.training.lr_linear_decay else None,
+                    }, os.path.join(cfg.ckpt_dir,ckpt_name))
+
         if cfg.multiprocessing_distributed:
             sampler['train'].set_epoch(epoch)
 
