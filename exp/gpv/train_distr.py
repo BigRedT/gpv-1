@@ -67,10 +67,16 @@ def visualize(model,dataloader,cfg,step,subset):
                     t[k] = v.cuda(device)
         
         answer_tokens,answer_token_ids = model.encode_answers(targets)
+        tasks_to_ids = {}
         for i,t in enumerate(targets):
             t['answer_token_ids'] = answer_token_ids[i,1:]
+            task_name = t['task']
+            if task_name not in tasks_to_ids:
+                tasks_to_ids[task_name] = []
+            
+            tasks_to_ids[task_name].append(i)
 
-        outputs = model(imgs,queries,answer_token_ids=None)
+        outputs = model(imgs,queries,answer_token_ids=None,tasks_to_ids=tasks_to_ids)
         dataset_name = list(dataloader.dataset.datasets.keys())[0]
         imgs = dataloader.dataset.datasets[dataset_name].get_images_from_tensor(imgs)
         imgs = imgs.detach().cpu().numpy().astype(np.uint8)
@@ -152,8 +158,8 @@ def train_worker(gpu,cfg):
     if cfg.gpu is not None:
         print("Use GPU: {} for training".format(cfg.gpu))
 
-    if gpu==0:
-        print(cfg.pretty())
+    # if gpu==0:
+    #     print(cfg.pretty())
 
     model = GPV(cfg.model)
     model.load_pretr_detr()
@@ -392,6 +398,17 @@ def train_worker(gpu,cfg):
                             'model_selection_metric': model_selection_metric,
                             'warmup_scheduler': warmup_scheduler.state_dict() if cfg.training.lr_linear_decay else None,
                         }, os.path.join(cfg.ckpt_dir,'model.pth'))
+                    
+                    ckpt_name = 'model_'+str(epoch-1) + '.pth'
+                    torch.save({
+                        'model': model.state_dict(),
+                        'optimizer': optimizer.state_dict(),
+                        'epoch': epoch-1,
+                        'step': step,
+                        'lr': lr_scheduler.get_last_lr(),
+                        'model_selection_metric': model_selection_metric,
+                        'warmup_scheduler': warmup_scheduler.state_dict() if cfg.training.lr_linear_decay else None,
+                    }, os.path.join(cfg.ckpt_dir,ckpt_name))
 
         if cfg.multiprocessing_distributed:
             sampler['train'].set_epoch(epoch)

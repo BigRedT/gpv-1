@@ -35,10 +35,16 @@ def vqa_accuracy(model,dataloader,cfg):
                     t[k] = v.cuda(device)
         
         answer_tokens,answer_token_ids = model.encode_answers(targets)
+        tasks_to_ids = {}
         for i,t in enumerate(targets):
             t['answer_token_ids'] = answer_token_ids[i,1:]
+            task_name = t['task']
+            if task_name not in tasks_to_ids:
+                tasks_to_ids[task_name] = []
+            
+            tasks_to_ids[task_name].append(i)
 
-        outputs = model(imgs,queries,answer_token_ids=None)
+        outputs = model(imgs,queries,answer_token_ids=None,tasks_to_ids=tasks_to_ids)
 
         topk_answers = torch.topk(outputs['answer_logits'][-1],k=1,dim=-1)
         topk_answer_ids = topk_answers.indices.detach().cpu().numpy()
@@ -88,10 +94,16 @@ def cap_metrics(model,dataloader,cfg):
                     t[k] = v.cuda(device)
         
         answer_tokens,answer_token_ids = model.encode_answers(targets)
+        tasks_to_ids = {}
         for i,t in enumerate(targets):
             t['answer_token_ids'] = answer_token_ids[i,1:]
+            task_name = t['task']
+            if task_name not in tasks_to_ids:
+                tasks_to_ids[task_name] = []
+            
+            tasks_to_ids[task_name].append(i)
 
-        outputs = model(imgs,queries,answer_token_ids=None)
+        outputs = model(imgs,queries,answer_token_ids=None,tasks_to_ids=tasks_to_ids)
 
         topk_answers = torch.topk(outputs['answer_logits'][-1],k=1,dim=-1)
         topk_answer_ids = topk_answers.indices.detach().cpu().numpy()
@@ -170,10 +182,16 @@ def cls_metrics(model,dataloader,cfg):
                     t[k] = v.cuda(device)
         
         answer_tokens,answer_token_ids = model.encode_answers(targets)
+        tasks_to_ids = {}
         for i,t in enumerate(targets):
             t['answer_token_ids'] = answer_token_ids[i,1:]
+            task_name = t['task']
+            if task_name not in tasks_to_ids:
+                tasks_to_ids[task_name] = []
+            
+            tasks_to_ids[task_name].append(i)
 
-        outputs = model(imgs,queries,answer_token_ids=None,vocab_mask=vocab_mask)
+        outputs = model(imgs,queries,answer_token_ids=None,vocab_mask=vocab_mask,tasks_to_ids=tasks_to_ids)
 
         topk_answers = torch.topk(outputs['answer_logits'][-1],k=1,dim=-1)
         topk_answer_ids = topk_answers.indices.detach().cpu().numpy()
@@ -242,10 +260,16 @@ def det_metrics(model,dataloader,cfg):
                     t[k] = v.cuda(device)
         
         answer_tokens,answer_token_ids = model.encode_answers(targets)
+        tasks_to_ids = {}
         for i,t in enumerate(targets):
             t['answer_token_ids'] = answer_token_ids[i,1:]
+            task_name = t['task']
+            if task_name not in tasks_to_ids:
+                tasks_to_ids[task_name] = []
+            
+            tasks_to_ids[task_name].append(i)
 
-        outputs = model(imgs,queries,answer_token_ids=None)
+        outputs = model(imgs,queries,answer_token_ids=None,tasks_to_ids=tasks_to_ids)
         relevance = outputs['pred_relevance_logits'].softmax(-1).detach().cpu().numpy()
         pred_boxes = outputs['pred_boxes'].detach().cpu().numpy()
         B = len(targets)
