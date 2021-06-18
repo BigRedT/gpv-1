@@ -35,7 +35,7 @@ def make_predictions(model,dataloader,samples,cfg):
 
     eval_dir = os.path.join(cfg.exp_dir,'eval')
     boxes_h5py = h5py.File(os.path.join(
-        eval_dir,f'{cfg.eval.task}_{cfg.eval.subset}_boxes.h5py'),'w')
+        eval_dir,f'{cfg.eval.task}_{cfg.task_configs.data_split}_{cfg.eval.subset}_boxes.h5py'),'w')
     task_id_name = evaluators.task_to_id[cfg.eval.task]
     predictions = {}
     cnt = 0
@@ -49,7 +49,15 @@ def make_predictions(model,dataloader,samples,cfg):
         imgs, queries, targets = data
         imgs = imgs.to(torch.device(cfg.gpu))
 
-        outputs = model(imgs,queries,None,vocab_mask=vocab_mask)
+        tasks_to_ids = {}
+        for j,t in enumerate(targets):
+            task_name = t['task']
+            if task_name not in tasks_to_ids:
+                tasks_to_ids[task_name] = []
+            
+            tasks_to_ids[task_name].append(j)
+
+        outputs = model(imgs,queries,None,tasks_to_ids=tasks_to_ids,vocab_mask=vocab_mask)
         relevance = outputs['pred_relevance_logits'].softmax(-1).detach().cpu().numpy()
         pred_boxes = outputs['pred_boxes'].detach().cpu().numpy()
         topk_answers = torch.topk(outputs['answer_logits'][-1],k=1,dim=-1)
