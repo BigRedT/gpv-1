@@ -35,7 +35,7 @@ def make_predictions(model,dataloader,samples,cfg):
 
     eval_dir = os.path.join(cfg.exp_dir,'eval')
     boxes_h5py = h5py.File(os.path.join(
-        eval_dir,f'{cfg.eval.task}_{cfg.eval.subset}_boxes.h5py'),'w')
+        eval_dir,f'{cfg.eval.task}_{cfg.task_configs.data_split}_{cfg.eval.subset}_boxes.h5py'),'w')
     task_id_name = evaluators.task_to_id[cfg.eval.task]
     predictions = {}
     cnt = 0

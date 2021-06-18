@@ -153,7 +153,7 @@ training:
 
 eval:
   task: CocoVqa
-  ckpt: ${exp_dir}/ckpts/model.pth
+  ckpt: ${exp_dir}/ckpts/model_22.pth
   batch_size: 20
   num_workers: 20
   subset: val
